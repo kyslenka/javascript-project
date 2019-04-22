@@ -1,0 +1,14 @@
+function print(arg, color) {
+  if (typeof arg === 'object') console.log(arg);
+  else console.log('%c' + arg, `color: ${color};`);
+}
+
+print('Welcome to the game!', 'gold');
+
+print('Follow the instructions to setup your game and start playing');
+
+function printSectionTitle(title, count) {
+    return "--------------------SETUP PLAYER--------------------";
+
+}
+console.log(printSectionTitle());
