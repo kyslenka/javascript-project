@@ -124,3 +124,52 @@ function cloneArray(objs) {
   let clonePlayer = [].concat(player[0]);
   clonePlayer.splice(0, 1, "Adrian"); //doesn't work, replaces the whole content of an array
   
+
+  function setName(name) {
+    player.name = name;
+    print("Player name set to " + name);
+  }
+
+  function clone(item) {
+    let keys = Object.keys(items);
+    let values = Object.values(items);
+    newItemObj = {};
+    for (i = 0; i < keys.length; i++) {
+      newItemObj[keys[i]] = values[i];
+    }
+    return newItemObj;
+  }
+
+  function move(direction) {
+    let newPosition = player.position;
+    switch() {
+        case "U": 
+            newPosition = {
+                row: player.position.row - 1,
+                column: player.position.column
+            };
+        break;
+        case "D": 
+            newPosition = {
+                row: player.position.row + 1,
+                column: player.position.column
+            };
+        break;
+        case "L": 
+            newPosition = {
+                row: player.position.row,
+                column: player.position.column - 1
+            };
+        break;
+        case "R": 
+        newPosition = {
+            row: player.position.row,
+            column: player.position.column + 1
+        };
+        break;
+    }
+    if (board[newPosition.row][newPosition.column].type !== "wall") {
+        player.position = newPosition;
+    }
+    printBoard();
+}

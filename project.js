@@ -22,88 +22,65 @@ function printSectionTitle(title, count = 20) {
   print(newSection, "blue");
 }
 
-const monsterNames = [
-  "Bigfoot",
-  "Centaur",
-  "Cerberus",
-  "Chimera",
-  "Ghost",
-  "Goblin",
-  "Golem",
-  "Manticore",
-  "Medusa",
-  "Minotaur",
-  "Ogre",
-  "Vampire",
-  "Wendigo",
-  "Werewolf"
-];
-
-const monsters = {
-  name: "", //(string - random from list of monster names)
-  level: 0, // (number - specified in parameters)
-  hp: 0, //(number - max is level * 100)
-  attack: 0, //(number - level * 10)
-  speed: 0, //(number - 6000 / level)
-  items: [{}, {}], //(array of objects - may be empty or not depending on parameters)
-  position: {}, //(object - specified in parameters)
-  type: "monster"
-  //getMaxHp: //(function - a method that returns max hp. Value is level * 100, e.g. level 2 -> 200 max hp)
-  //getExp: //(function - returns exp received for defeating monster. Value is level * 10 e.g. level 2 -> 20 exp points received)
-};
-
-const tradesman = {
-  name: "", //(string - can be anything)
-  hp: Math.pow(10, 1000), //(number - Infinity)
-  items: [{}, {}], //(array of objects - may be empty or not depending on parameters)
-  position: {}, //(object - specified in parameters)
-  type: "tradesman",
-  getMaxHp: Math.pow(10, 1000) //(function - a method that returns max hp. For tradesman it's Infinity)
-};
-
-const dungeon = {
-  isLocked: true, //(boolean)
-  hasPrincess: true, //(boolean)
-  items: [{}, {}] //(array of objects)
-  //gold: 0, //(number)
-  //position: {}, //(object - specified in parameters)
-  //type: "dungeon"
-};
-
-// Returns a new object with the same keys and values as the input object
-function clone(entity) {
-  let keys = Object.keys(entity);
-  let values = Object.values(entity);
-  objCopy = {};
-  for (i = 0; i < keys.length; i++) {
-    objCopy[keys[i]] = values[i];
-  }
-  return objCopy;
-}
-
-dungeon1 = clone(dungeon);
-print(dungeon);
-print(dungeon1);
-
 const RARITY_LIST = ["Common", "Unusual", "Rare", "Epic"];
 
-//let hp = level * 100;
-
 // Array of item objects. These will be used to clone new items with the appropriate properties.
-const items = [
+let items = [
   {
     name: "Common potion",
     type: "potion",
     value: 5,
     rarity: 0
-    //use: player => hp + 25 //restores 25hp to the specified target
+    //use: player => player.hp + 25 //restores 25hp to the specified target
+  },
+  {
+    name: "Unusual potion",
+    type: "potion",
+    value: 10,
+    rarity: 1
+    //use: player => player.hp + 25 //restores 25hp to the specified target
+  },
+  {
+    name: "Rare potion",
+    type: "potion",
+    value: 20,
+    rarity: 2
+    //use: player => player.hp + 25 //restores 25hp to the specified target
+  },
+  {
+    name: "Epic potion",
+    type: "potion",
+    value: 50,
+    rarity: 3
+    //use: player => player.hp + 25 //restores 25hp to the specified target
   },
   {
     name: "Common bomb",
     type: "bomb",
     value: 7,
     rarity: 0
-    //use: //deals 50hp damage to the specified target
+    //use: monster => monster.hp - 50 //deals 50hp damage to the specified target
+  },
+  {
+    name: "Unusual bomb",
+    type: "bomb",
+    value: 12,
+    rarity: 1
+    //use: monster => monster.hp - 50 //deals 50hp damage to the specified target
+  },
+  {
+    name: "Rare bomb",
+    type: "bomb",
+    value: 25,
+    rarity: 2
+    //use: monster => monster.hp - 50 //deals 50hp damage to the specified target
+  },
+  {
+    name: "Epic bomb",
+    type: "bomb",
+    value: 100,
+    rarity: 3
+    //use: monster => monster.hp - 50 //deals 50hp damage to the specified target
   },
   {
     name: "Epic key",
@@ -113,6 +90,23 @@ const items = [
     //use: //Unlocks the door to a dungeon
   }
 ];
+
+// Creates an item entity by cloning one of the item objects and adding the position and type properties.
+// item is a reference to one of the items in the items variable. It needs to be cloned before being assigned the position and type properties.
+
+function createItem(item, position) {
+  let newItemObj = clone(item);
+  newItemObj.type = type;
+  newItemObj.position = position;
+
+  return newItemObj;
+}
+
+// Uses a player item (note: this consumes the item, need to remove it after use)
+// itemName is a string, target is an entity (i.e. monster, tradesman, player, dungeon)
+// If target is not specified, item should be used on player for type 'potion'. Else, item should be used on the entity at the same position
+// First item of matching type is used
+function useItem(itemName, target) {}
 
 // Clones an array of objects
 // returns a new array of cloned objects. Useful to clone an array of item objects
@@ -125,34 +119,70 @@ function cloneArray(objs) {
   return newArrObj;
 }
 
-cloneArray(items);
+startItems = cloneArray(items);
+
+// Returns a new object with the same keys and values as the input object
+function clone(entity) {
+  let keys = Object.keys(entity);
+  let values = Object.values(entity);
+  objCopy = {};
+  for (i = 0; i < keys.length; i++) {
+    objCopy[keys[i]] = values[i];
+  }
+  return objCopy;
+}
+
+// returns true or false to indicate whether 2 different objects have the same keys and values
+
+function assertEqual(obj1, obj2) {
+  let keys1 = Object.keys(obj1);
+  let values1 = Object.values(obj1);
+  let keys2 = Object.keys(obj2);
+  let values2 = Object.values(obj2);
+  for (let i = 0; i < keys1.length; i++) {
+    if (keys1[i] !== keys2[i]) return false;
+    if (values1[i] !== values2[i]) return false;
+    return true;
+  }
+}
 
 let player = {
   name: "",
   level: 1,
-  items: [{}, {}], //(array of objects)
-  skills: [
-    //(array of objects - will have 2 skill objects: confuse and steal)
-    { name: "confuse" },
-    { name: "steal" }
-  ],
+  items: [], //(array of objects)
+  skills: [], //[confuse, steal],
   attack: 10,
   speed: 3000,
   hp: 100,
   gold: 0, //(number - 0 to start. Can get gold by selling items to the tradesman)
   exp: 0, //(number - 0 to start. Experience points, increase when slaying monsters)
   type: "player",
-  position: {} //(object - can be left out and set when needed)
-  //getMaxHp (function - a method that returns max hp. Value is level * 100, e.g. level 2 -> 200 max hp)
-  //levelUp (function - a method to update the level and the different properties affected by a level change. Level up happens when exp >= [player level * 20])
-  //getExpToLevel (function - a method returning exp required to level. Value is level * 20, e.g. level 2 -> 40exp required)
+  position: { row: 0, column: 0 }, //(object - can be left out and set when needed)
+  getMaxHp: function() {
+    this.hp = this.level * 100;
+  }, //(function - a method that returns max hp. Value is level * 100, e.g. level 2 -> 200 max hp)
+  levelUp: function() {
+    //(function - a method to update the level and the different properties affected by a level change. Level up happens when exp >= [player level * 20])
+    if (this.exp >= (this.level + 1) * 20) {
+      this.level = this.level + 1;
+      this.hp = this.level * 100;
+      this.attack = this.level * 10;
+      this.speed = 3000 / this.level;
+    }
+  },
+  getExpToLevel: function() {
+    //(function - a method returning exp required to level. Value is level * 20, e.g. level 2 -> 40exp required)
+    this.exp = this.level * 20;
+  }
 };
 
 // Sets the player variable to a player object based on the specifications of the README file
 // The items property will need to be a new array of cloned item objects
 // Prints a message showing player name and level (which will be 1 by default)
-function createPlayer(name, level = 1, items = []) {
+function createPlayer(name, level = 1, items = startItems) {
   player.name = name;
+  player.level = level;
+  player.items = items;
   print(
     "Welcome " +
       player.name +
@@ -161,7 +191,8 @@ function createPlayer(name, level = 1, items = []) {
       player.level +
       "." +
       " You have these items: " +
-      +"."
+      player.items +
+      "."
   );
 }
 
@@ -181,28 +212,11 @@ function createBoard(rows, columns) {
       }
     }
   }
-  return board;
-}
-
-function printBoard() {
-  // Prints the board
-  let boardStr = "";
-  for (x = 0; x < board.length; x++) {
-    for (y = 0; y < board[0].length; y++) {
-      boardStr += board[x][y];
-    }
-    boardStr += "\n";
-  }
-  print(boardStr);
-}
-
-// Creates the board and places player
-function initBoard(rows, columns) {
-  return createBoard(rows, columns);
 }
 
 // Sets the position property of the player object to be in the middle of the board
 // You may need to use Math methods such as Math.floor()
+
 function placePlayer() {
   let x = Math.floor(board.length / 2);
   let y = Math.floor(board[0].length / 2);
@@ -210,45 +224,107 @@ function placePlayer() {
   return board;
 }
 
-initBoard(7, 15);
-placePlayer();
-printBoard();
+// Creates the board and places player
+function initBoard(rows, columns) {
+  print("Creating board and placing a player...");
+  createBoard(rows, columns);
+  placePlayer();
+}
 
-// returns true or false to indicate whether 2 different objects have the same keys and values
-function assertEqual(obj1, obj2) {}
-
-// Uses a player item (note: this consumes the item, need to remove it after use)
-// itemName is a string, target is an entity (i.e. monster, tradesman, player, dungeon)
-// If target is not specified, item should be used on player for type 'potion'. Else, item should be used on the entity at the same position
-// First item of matching type is used
-function useItem(itemName, target) {}
-
-// Uses a player skill (note: skill is not consumable, it's useable infinitely besides the cooldown wait time)
-// skillName is a string. target is an entity (typically monster).
-function useSkill(skillName, target) {}
+function printBoard() {
+  // Prints the board
+  let boardDisplay = "";
+  for (x = 0; x < board.length; x++) {
+    for (y = 0; y < board[0].length; y++) {
+      boardDisplay += board[x][y];
+    }
+    boardDisplay += "\n";
+  }
+  print(boardDisplay);
+}
 
 // Updates the board by setting the entity at the entity position
 // An entity has a position property, each board cell is an object with an entity property holding a reference to the entity at that position
 // When a player is on a board cell, the board cell keeps the current entity property (e.g. monster entity at that position) and may need to have an additional property to know the player is there too.
 function updateBoard(entity) {}
 
-// Sets the player variable to a player object based on the specifications of the README file
-// The items property will need to be a new array of cloned item objects
-// Prints a message showing player name and level (which will be 1 by default)
-function createPlayer(name, level = 1, items = []) {}
+const monsterNames = [
+  "Bigfoot",
+  "Centaur",
+  "Cerberus",
+  "Chimera",
+  "Ghost",
+  "Goblin",
+  "Golem",
+  "Manticore",
+  "Medusa",
+  "Minotaur",
+  "Ogre",
+  "Vampire",
+  "Wendigo",
+  "Werewolf"
+];
+
+let monster = {
+  name: "", //(string - random from list of monster names)
+  level: 0, // (number - specified in parameters)
+  hp: 0, //(number - max is level * 100)
+  attack: 0, //(number - level * 10)
+  speed: 0, //(number - 6000 / level)
+  items: [{}, {}], //(array of objects - may be empty or not depending on parameters)
+  position: {}, //(object - specified in parameters)
+  type: "monster",
+  getMaxHp: function() {
+    this.hp = this.level * 100;
+  } //(function - a method that returns max hp. Value is level * 100, e.g. level 2 -> 200 max hp)
+  //getExp: //(function - returns exp received for defeating monster. Value is level * 10 e.g. level 2 -> 20 exp points received)
+};
 
 // Creates a monster object with a random name with the specified level, items and position
 // The items property will need to be a new array of cloned item objects
 // The entity properties (e.g. hp, attack, speed) must respect the rules defined in the README
-function createMonster(level, items, position) {}
+function createMonster(level, items, position) {
+  print("Creating a monster...");
+  insideMonster = clone(monster);
+  insideMonster.level = level;
+  insideMonster.items = items;
+  insideMonster.position = position;
+  insideMonster.attack = level * 10;
+  insideMonster.speed = 6000 / level;
+  insideMonster.hp = level * 100;
+
+  return insideMonster;
+}
+
+let tradesman = {
+  name: "", //(string - can be anything)
+  hp: Math.pow(10, 1000), //(number - Infinity)
+  items: [{}, {}], //(array of objects - may be empty or not depending on parameters)
+  position: {}, //(object - specified in parameters)
+  type: "tradesman",
+  getMaxHp: function() {
+    this.hp = Math.pow(10, 1000);
+  } //(function - a method that returns max hp. For tradesman it's Infinity)
+};
 
 // Creates a tradesman object with the specified items and position. hp is Infinity
 // The items property will need to be a new array of cloned item objects
-function createTradesman(items, position) {}
+function createTradesman(items, position) {
+  insideTradesman = clone(tradesman);
+  insideTradesman.items = cloneArray(items);
+  isideTradesman.position = position;
 
-// Creates an item entity by cloning one of the item objects and adding the position and type properties.
-// item is a reference to one of the items in the items variable. It needs to be cloned before being assigned the position and type properties.
-function createItem(item, position) {}
+  return insideTradesman;
+}
+
+let dungeon = {
+  isLocked: true, //(boolean)
+  hasPrincess: true, //(boolean)
+  items: [{}, {}], //(array of objects)
+  gold: 0, //(number)
+  position: {}, //(object - specified in parameters)
+  type: "dungeon"
+};
 
 // Creates a dungeon entity at the specified position
 // The other parameters are optional. You can have unlocked dungeons with no princess for loot, or just empty ones that use up a key for nothing.
@@ -258,7 +334,32 @@ function createDungeon(
   hasPrincess = true,
   items = [],
   gold = 0
-) {}
+) {
+  insideDungeon = clone(dungeon);
+  insideDungeon.position = position;
+  insideDungeon.isLocked = isLocked;
+  insideDungeon.hasPrincess = hasPrincess;
+  insideDungeon.items = items;
+  insideDungeon.gold = gold;
+}
+
+const grass = ".";
+
+const wall = "#";
+
+const wallEntity = {
+  type: "wall",
+  position: { row: 0, column: 0 }
+};
+
+const grassEntity = {
+  type: "grass",
+  position: { row: 0, column: 0 }
+};
+
+// Uses a player skill (note: skill is not consumable, it's useable infinitely besides the cooldown wait time)
+// skillName is a string. target is an entity (typically monster).
+function useSkill(skillName, target) {}
 
 // Moves the player in the specified direction
 // You will need to handle encounters with other entities e.g. fight with monster
