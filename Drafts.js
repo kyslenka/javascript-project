@@ -142,7 +142,7 @@ function cloneArray(objs) {
 
   function move(direction) {
     let newPosition = player.position;
-    switch() {
+    switch(direction) {
         case "U": 
             newPosition = {
                 row: player.position.row - 1,
@@ -173,3 +173,181 @@ function cloneArray(objs) {
     }
     printBoard();
 }
+
+//let items[i] = startItems[i];
+//item.position = startItem.position;
+
+
+createPlayer.name = player.name;
+
+function setName(name) {
+    createPlayer.name = player.name;
+    return name;
+}
+print();
+
+//setInterval(() => playerHit(message, 3000));
+
+
+//if (board[newPlayerPosition.row][newPlayerPosition.column].type !== "wall") {
+    //player.position = newPlayerPosition;
+
+
+    //if (player.position === grass.position) print("P");
+  //if (player.position === newPlayerPosition) print(".");
+
+  //if (player.position === newItem.position)
+    //return player.item.push(NewItemObj); //print("P")
+  //if (player.position === newPlayerPosition) print(".");
+
+
+  function f(str) {
+    let reversed = '';
+    for (let i = str.length - 1; i >= 0; i--) {
+      reversed += str.charAt(i);
+    }
+    return reversed;
+  }
+
+  function updateBoard(entity) {
+    board[entity.position.row][entity.position.column] = entity.type.slice(0, 1);
+    
+    printBoard();
+}
+
+function hitPlayer() {
+    monster.hp = monster.hp - player.attack;
+        print(monster.name + " hit!" + " -" + player.attack + " hp" + "\n" + "HP left: " + monster.hp);
+        if(monster.hp <= 0) {
+            clearInterval(interval1);
+            print(monster.name + "defeated." + "\n" + "Congratulations! You have received 10 exp points");
+        } //else if (monster.hp = 0) {
+            //player.exp + 10; 
+            //print(monster.name + "defeated." + "\n" + "Congratulations! You have received 10 exp points");
+    //}
+}
+
+    let interval1 = setInterval(() => hitPlayer(), 3000);
+
+function hitMonster() {
+    player.hp = player.hp - monster.attack;
+    print(player.name + " hit!" + " -" + monster.attack + " hp" + "\n" + "HP left: " + player.hp);
+        if(player.hp <= 0) {
+            clearInterval(interval2);
+        //} else if (player.hp = 0) {
+            //gameOver();
+        //}
+    }
+}
+    let interval2 = setInterval(() => hitMonster(), 6000);
+
+    monster1.hp = monster1.hp - player.attack;
+    let message = monster1.name + " hit!" + " -" + player.attack + " hp" + "\n" + "HP left: " + monster1.hp;
+
+function playerHit(x) {
+    print(x, "purple");
+}
+
+  print(playerHit(message));
+
+  player.hp = player.hp - monster1.attack;
+  let message1 = player.name + " hit!" + " -" + monster1.attack + " hp" + "\n" + "HP left: " + player.hp;
+
+function monsterHit(x) {
+    print(x, "red");
+}
+
+  print(monsterHit(message1));
+
+  if (
+    target === undefined &&
+    startItems.type === "potion" &&
+    entity.position === newPlayerPosition
+  )
+
+  function createTradesman(items, position) {
+    newTradesman = clone(tradesman);
+    newTradesman.items = cloneArray(items);
+    newTradesman.position = position;
+  
+    return newTradesman;
+  }
+
+  function createBoard(rows, columns) {
+    for (x = 0; x < rows; x++) {
+      board[x] = [];
+      for (y = 0; y < columns; y++) {
+        if (x === 0 || x === rows - 1 || y === 0 || y === columns - 1) {
+          board[x].push([
+              {type: "wall", position: { row: 0, column: 0 }, symbol: "#"}
+          ]);
+        } else {
+          board[x].push([
+              {type: "grass", position: { row: 0, column: 0 }, symbol: "#"}   
+          ]);
+        }
+      }
+    }
+  }
+
+  //if (newPlayerPosition === monster.position) print("Encountered a " + monster.name + "!");
+//if (newPlayerPosition === item.position) print("Found a " + item1 + "!");
+//if (newPlayerPosition === tradesman.position) print("Encountered a tradesman!");
+//if (newPlayerPosition === dungeon.position) print("Found a dungeon!");
+//if (newPlayerPosition === dungeon.position && dungeon.isLocked === false && dungeon.hasPrincess === true) {
+//printSectionTitle("GAME OVER");
+//}
+//if (player.position === newItem.position) {
+//board[x][y] = ".";
+//board[newPlayerPosition.row][newPlayerPosition.column] = "P";
+//player.position = newPlayerPosition;
+//}
+
+ //if(player.items + tradesman.items[i]) {
+// player.gold = player.gold - tradesman.items[].value;
+//tradesman.items = tradesman.items - tradesman.items[];
+//player.items = player.items + tradesman.items[];
+//}
+//if(tradesman.items + player.items[]) {
+//player.gold = player.gold + player.items[].value;
+//player.items = player.items - player.items[];
+//tradesman.items = tradesman.items + player.items[];
+//}
+//}
+
+
+function createBoard(rows, columns) {
+    board = [];
+    //let x = {};
+    //let y = {};
+    for (x = 0; x < rows; x++) {
+      board[x] = [];
+      for (y = 0; y < columns; y++) {
+        if (x === 0 || x === rows - 1 || y === 0 || y === columns - 1) {
+          board[x].push([
+            { type: "wall", position: { row: 0, column: 0 }, symbol: "#" }
+          ]);
+        } else {
+          board[x].push([
+            { type: "grass", position: { row: 0, column: 0 }, symbol: "." }
+          ]);
+        }
+      }
+    }
+  }
+
+function printBoard() {
+    // Prints the board
+    for (i = 0; i < board.length; i++) {
+      let boardDisplay = "";
+      for (x = 0; x < board.length; x++) {
+        for (y = 0; y < board[i][x].length; y++) {
+          boardDisplay += board[i][x][y].symbol;
+        }
+        //boardDisplay += "\n";
+      }
+      print(boardDisplay);
+    }
+  }
+  
+  
