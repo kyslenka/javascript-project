@@ -6,7 +6,7 @@ If you think you have a better / different way to do things, you are free to do 
 const GAME_STEPS = ["SETUP_PLAYER", "SETUP_BOARD", "GAME_START"];
 let gameStep = 0; // The current game step, value is index of the GAME_STEPS array.
 let board = [];
-
+let boardEntity = ".";
 // Utility function to print messages with different colors. Usage: print('hello', 'red');
 function print(arg, color) {
   if (typeof arg === "object") console.log(arg);
@@ -104,7 +104,9 @@ let items = [
     value: 150,
     rarity: 3,
     use: function use(target) {
-      if (newDungeon.isLocked === true) return newDungeon.isLocked === false;
+      if (target.isLocked === true) {
+        target.isLocked = false;
+      }
     } //Unlocks the door to a dungeon
   }
 ];
@@ -165,8 +167,8 @@ function assertEqual(obj1, obj2) {
   for (let i = 0; i < keys1.length; i++) {
     if (keys1[i] !== keys2[i]) return false;
     if (values1[i] !== values2[i]) return false;
-    return true;
   }
+  return true;
 }
 
 let player = {
@@ -177,7 +179,7 @@ let player = {
   attack: 10,
   speed: 3000,
   hp: 100,
-  gold: 0, //(number - 0 to start. Can get gold by selling items to the tradesman)
+  gold: 100, //(number - 0 to start. Can get gold by selling items to the tradesman)
   exp: 0, //(number - 0 to start. Experience points, increase when slaying monsters)
   type: "Player",
   position: { row: 0, column: 0 }, //(object - can be left out and set when needed)
@@ -262,8 +264,9 @@ function initBoard(rows, columns) {
   placePlayer();
   item1 = createItem(items[0], { row: 2, column: 7 });
   monster1 = createMonster(1, items[2], { row: 1, column: 7 });
-  tradesman1 = createTradesman(items[3], { row: 2, column: 2 });
-  dungeon1 = createDungeon({ row: 5, column: 3 }, false, false, items[4], 100);
+  print(monster1.getExp());
+  tradesman1 = createTradesman(items, { row: 3, column: 6 });
+  dungeon1 = createDungeon({ row: 4, column: 7 }, false, false, items[4], 100);
   board[item1.position.row][item1.position.column].entity = "I";
   updateBoard(monster1);
   updateBoard(tradesman1);
@@ -316,9 +319,11 @@ function createMonster(level = 1, items = [], position) {
     type: "Monster",
     getMaxHp: function() {
       this.hp = this.level * 100;
-    }
+    },
     //(function - a method that returns max hp. Value is level * 100, e.g. level 2 -> 200 max hp)
-    //getExp: //(function - returns exp received for defeating monster. Value is level * 10 e.g. level 2 -> 20 exp points received)
+    getExp: function() {
+      return this.level * 10;
+    } //(function - returns exp received for defeating monster. Value is level * 10 e.g. level 2 -> 20 exp points received)
   };
 
   return monster;
@@ -396,7 +401,8 @@ function move(direction) {
   let x = newPlayerPosition.row;
   let y = newPlayerPosition.column;
   if (board[x][y].entity !== "#") {
-    board[player.position.row][player.position.column].entity = ".";
+    board[player.position.row][player.position.column].entity = boardEntity;
+    boardEntity = ".";
     board[x][y].entity = "P";
     player.position = newPlayerPosition;
   } else {
@@ -410,8 +416,8 @@ function move(direction) {
 
   if (assertEqual(newPlayerPosition, monster1.position)) {
     print("Encountered a " + monster1.name + "!");
-    let interval1 = setInterval(() => hitPlayer(), 30);
-    let interval2 = setInterval(() => hitMonster(), 60);
+    let interval1 = setInterval(() => hitPlayer(), player.speed);
+    let interval2 = setInterval(() => hitMonster(), monster1.speed);
     function hitPlayer() {
       monster1.hp = monster1.hp - player.attack;
       print(
@@ -428,13 +434,15 @@ function move(direction) {
       if (monster1.hp <= 0) {
         clearInterval(interval1);
         clearInterval(interval2);
-        player.exp = player.exp + 10;
-        player.items.push(monster1.items);
+        player.exp = player.exp + monster1.getExp();
+        player.items = player.items.concat(monster1.items);
         print(
           monster1.name +
             " defeated." +
             "\n" +
-            "Congratulations! You have received 10 exp points." +
+            "Congratulations! You have received " +
+            monster1.getExp() +
+            " exp points." +
             "\n" +
             "You received the following items:" +
             "\n"
@@ -463,79 +471,65 @@ function move(direction) {
     }
   }
 
-  //if (assertEqual(newPlayerPosition, tradesman1.position)) {
-  //print(
-  //"Encountered Mysterious trader! You can buy " +
-  //itemIdx +
-  //" and sell " +
-  //itemIdx +
-  //" items $$$" +
-  //"\n" +
-  //"Items for sale:" +
-  //"\n" +
-  //player.items[i]
-  //);
-  //for (i = 0; i < player.items.length; i++) {
-  //if (player.items.splice[(i, 1)]) {
-  //player.gold = player.gold + player.items[i].value;
-  //tradesman1.items = tradesman1.items + player.items[i];
-  //}
-  //if (tradesman1.items.splice[(i, 1)]) {
-  //player.gold = player.gold - tradesman1.items[i].value;
-  //player.items = player.items + tradesman1.items[i];
-  //}
-  //}
+  if (assertEqual(newPlayerPosition, tradesman1.position)) {
+    print(
+      "Encountered Mysterious trader! You can buy(itemIdx) and sell(itemIdx) items $$$" +
+        "\n" +
+        "Items for sale:" +
+        "\n"
+    );
+    boardEntity = "T";
+    print(tradesman1.items);
+  }
 
-  //if (assertEqual(newPlayerPosition, dungeon1.position)) {
-  //print(
-  //"Found a dungeon!" +
-  //"\n" +
-  //"You need a key to open it. If you have a key, try " +
-  //useItem("key") +
-  //" to unlock the door." +
-  //"\n" +
-  //"Rumors are some monsters have keys to dungeons. The tradesman might also have spare keys to sell but they don't come cheap."
-  //);
-  //if (dungeon1.isLocked === false && dungeon1.hasPrincess === true) {
-  //printSectionTitle("GAME OVER");
-  //if (dungeon1.isLocked === false && dungeon1.hasPrincess === false) {
-  //player.items = player.items + dungeon1.items;
-  //player.gold = player.gold + dungeon1.gold;
-  //dungeon1.items.splice();
-  //dungeon1.gold.splice();
-  //if (useItem("Epic key")) {
-  //print("Unlocking dungeon...", "red");
-  //}
-  //if (dungeon1.isLocked === false && dungeon1.hasPrincess === true) {
-  //print(
-  //"The dungeon is unlocked!" +
-  //"\n" +
-  //"You have freed the princess! Congratulations!" +
-  //"The adventurer " +
-  //player.name +
-  //"and the princess lived happily ever after..."
-  //};
-  //printSectionTitle("GAME OVER", "blue");
-  //}
-  //}
-  //}
-  //}
-  //}
+  if (assertEqual(newPlayerPosition, dungeon1.position)) {
+    boardEntity = "D";
+    print("Found a dungeon!");
+    if (dungeon1.isLocked === true) {
+      print(
+        "You need a key to open it. If you have a key, try useItem(key) to unlock the door." +
+          "\n" +
+          "Rumors are some monsters have keys to dungeons. The tradesman might also have spare keys to sell but they don't come cheap."
+      );
+    }
+    if (dungeon1.isLocked === false && dungeon1.hasPrincess === false) {
+      print("You found " + dungeon1.gold + " gold and these items: " + "\n");
+      print(dungeon1.items);
+      player.items = player.items.concat(dungeon1.items);
+      player.gold += dungeon1.gold;
+      dungeon1.items = [];
+      dungeon1.gold = 0;
+    }
+    if (dungeon1.isLocked === false && dungeon1.hasPrincess === true) {
+      print(
+        "The dungeon is unlocked!" +
+          "\n" +
+          "You have freed the princess! Congratulations!" +
+          "The adventurer " +
+          player.name +
+          " and the princess lived happily ever after..."
+      );
+      gameOver();
+    }
+  }
   printBoard();
 }
 
-//if(player.hp < 0) {
-//player.hp = 0;
-//};
-//if(player.hp = 0) {
-//clearInterval(interval1);
-//printSectionTitle("GAME OVER);
-//}
-//if (player.exp >= (player.level + 1) * 20) return player.levelUp();
+function sell(itemIdx) {
+  if (assertEqual(player.position, tradesman1.position)) {
+    player.gold += player.items[itemIdx].value;
+    tradesman1.items.push(player.items[itemIdx]);
+    player.items.splice(itemIdx, 1);
+  }
+}
 
-//if(monster.hp < 0) {
-//monster.hp = 0;
-//};
+function buy(itemIdx) {
+  if (assertEqual(player.position, tradesman1.position)) {
+    player.gold -= player.items[itemIdx].value;
+    player.items.push(tradesman1.items[itemIdx]);
+    tradesman1.items.splice(itemIdx, 1);
+  }
+}
 
 let skills = {
   name: "",
