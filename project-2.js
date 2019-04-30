@@ -116,7 +116,6 @@ let items = [
 // item is a reference to one of the items in the items variable. It needs to be cloned before being assigned the position and type properties.
 
 function createItem(item, position) {
-  print("Creating item...");
   let newItem = clone(item);
   newItem.position = position;
 
@@ -129,8 +128,7 @@ function createItem(item, position) {
 function cloneArray(objs) {
   let newArrObj = [];
   for (let i = 0; i < objs.length; i++) {
-    arr[i] = clone(objs[i]);
-    newArrObj.push(arr[i]);
+    newArrObj[i] = clone(objs[i]);
   }
   return newArrObj;
 }
@@ -164,25 +162,12 @@ let player = {
   name: "",
   level: 1,
   items: [], //(array of objects)
-  skills: [
-    {
-      name: "steal",
-      requiredLevel: 3, //(number - the skill should not be useable if player level is lower)
-      cooldown: 25000, //(number - initial value is 0 meaning it's useable, over 0 means we have to wait. This gets updated to the cooldown value when skill is used and gradually decreases until it's back to 0)
-      use: () => {} //(function - takes a target / entity as a parameter and uses the skill on it)
-    },
-    {
-      name: "confuse",
-      requiredLevel: 1,
-      cooldown: 10000,
-      use: () => {} //expects a target as parameter and reverses the name of the target entity as well as dealing [player level * 25] damage (e.g. level 1 -> deals 25hp)
-    }
-  ], //[confuse, steal]
+  skills: [{}, {}], //[confuse, steal],
   attack: 10,
   speed: 3000,
   hp: 100,
-  gold: 0, //(number - 0 to start. Can get gold by selling items to the tradesman)
-  exp: 0, //(number - 0 to start. Experience points, increase when slaying monsters)
+  gold: 20, //(number - 0 to start. Can get gold by selling items to the tradesman)
+  exp: 35, //(number - 0 to start. Experience points, increase when slaying monsters)
   type: "Player",
   position: { row: 0, column: 0 }, //(object - can be left out and set when needed)
   getMaxHp: function() {
@@ -207,13 +192,19 @@ let player = {
 // The items property will need to be a new array of cloned item objects
 // Prints a message showing player name and level (which will be 1 by default)
 function createPlayer(name, level = 1, items = []) {
-  print("Creating player with name " + name + " and level " + level);
   player.name = name;
   player.level = level;
   player.items = cloneArray(items);
   print(
-    "Welcome " + player.name + "!" + " You are at level " + player.level + "."
+    "Welcome " +
+      player.name +
+      "!" +
+      " You are at level " +
+      player.level +
+      "." +
+      " You have these items: "
   );
+  print(player.items);
 }
 
 // Sets the board variable to a 2D array of rows and columns
@@ -254,48 +245,26 @@ function placePlayer() {
 
 // Creates the board and places player
 function initBoard(rows, columns) {
-  print("Creating board and placing player...");
+  print("Creating board and placing a player...");
   createBoard(rows, columns);
+  createPlayer("Van", 1, [items[0], items[8]]);
   placePlayer();
-
-  return printBoard();
-}
-
-function readyBoard() {
-  createPlayer("Bob", 1, [items[0]]);
-  initBoard(7, 15);
   item1 = createItem(items[0], { row: 2, column: 7 });
-  monster1 = createMonster(1, [items[1], items[4]], { row: 1, column: 6 });
-  monster2 = createMonster(2, items[8], { row: 1, column: 2 });
-  tradesman1 = createTradesman(items, { row: 4, column: 7 });
-  dungeon1 = createDungeon(
-    { row: 2, column: 7 },
-    false,
-    false,
-    [items[0], items[1]],
-    40
-  );
-  dungeon2 = createDungeon({ row: 5, column: 8 }, true, false, items[2], 200);
-  dungeon3 = createDungeon({ row: 3, column: 3 }, true, true, items[6], 300);
+  monster1 = createMonster(1, items[2], { row: 1, column: 7 });
+  monster2 = createMonster(5, items[4], { row: 1, column: 8 });
+  tradesman1 = createTradesman(items, { row: 3, column: 6 });
+  dungeon1 = createDungeon({ row: 4, column: 7 }, true, false, items[4], 100);
+  dungeon2 = createDungeon({ row: 3, column: 8 }, false, false, items[2], 200);
+  dungeon3 = createDungeon({ row: 3, column: 3 }, true, true, items[8], 300);
   board[item1.position.row][item1.position.column].entity = "I";
-  updateBoard(createItem(items[0], { row: 2, column: 7 }));
-  updateBoard(createMonster(1, [items[1], items[4]], { row: 1, column: 6 }));
-  updateBoard(createMonster(2, items[8], { row: 1, column: 2 }));
-  updateBoard(createTradesman(items, { row: 4, column: 7 }));
-  updateBoard(
-    createDungeon({ row: 2, column: 7 }, false, false, [items[0], items[1]], 40)
-  );
-  updateBoard(
-    createDungeon({ row: 5, column: 8 }, false, false, items[2], 200)
-  );
-  updateBoard(createDungeon({ row: 3, column: 3 }, true, true, items[6], 300));
-  updateBoard(item1);
   updateBoard(monster1);
   updateBoard(monster2);
-  updateBoard(dungeon1);
   updateBoard(dungeon2);
   updateBoard(dungeon3);
   updateBoard(tradesman1);
+  updateBoard(dungeon1);
+  //useItem("Common potion", player);
+  return printBoard();
 }
 
 function printBoard() {
@@ -343,7 +312,7 @@ const monsterNames = [
 // The items property will need to be a new array of cloned item objects
 // The entity properties (e.g. hp, attack, speed) must respect the rules defined in the README
 function createMonster(level = 1, items = [], position) {
-  print("Creating monster...");
+  print("Creating a monster...");
   let monster = {
     name: monsterNames[Math.floor(Math.random() * monsterNames.length)], //(string - random from list of monster names)
     level: level, // (number - specified in parameters)
@@ -392,7 +361,6 @@ function createDungeon(
   items = [],
   gold = 0
 ) {
-  print("Creating dungeon...");
   let dungeon = {
     isLocked: isLocked, //(boolean)
     hasPrincess: hasPrincess, //(boolean)
@@ -441,13 +409,13 @@ function move(direction) {
   if (assertEqual(newPlayerPosition, item1.position)) {
     boardEntityNextStep = ".";
     player.items.push(item1);
-    print("Found " + item1.name + "!");
+    print("Found a " + item1.name + "!");
   }
 
   if (board[x][y].entity === "M") {
     boardEntityNextStep = ".";
     monster = board[x][y].object;
-    print("Encountered " + monster.name + "!");
+    print("Encountered a " + monster.name + "!");
     let interval1 = setInterval(() => hitPlayer(), player.speed);
     let interval2 = setInterval(() => hitMonster(), monster.speed);
     function hitPlayer() {
@@ -471,13 +439,17 @@ function move(direction) {
         clearInterval(interval2);
         player.exp = player.exp + monster.getExp();
         player.items = player.items.concat(monster.items);
-        print(monster.name + " defeated.");
         print(
-          "Congratulations! You have received " +
+          monster.name +
+            " defeated." +
+            "\n" +
+            "Congratulations! You have received " +
             monster.getExp() +
-            " exp points."
+            " exp points." +
+            "\n" +
+            "You received the following items:" +
+            "\n"
         );
-        print("You received the following items:");
         print(monster.items);
         if ((player.level + 1) * 20 < player.exp) {
           player.levelUp();
@@ -512,14 +484,13 @@ function move(direction) {
     }
   }
 
-  if (board[x][y].entity === "T") {
-    tradesman = board[x][y].object;
-    boardEntityNextStep = "T";
+  if (assertEqual(newPlayerPosition, tradesman1.position)) {
     print(
-      "You encountered Mysterious trader! You can buy(itemIdx) and sell(itemIdx) items"
+      "You encountered a Mysterious trader! You can buy(itemIdx) and sell(itemIdx) items"
     );
     print("Items for sale:");
-    print(tradesman.items);
+    boardEntityNextStep = "T";
+    print(tradesman1.items);
   }
 
   if (board[x][y].entity === "D") {
@@ -585,11 +556,12 @@ function useItem(itemName, target) {
         player.items[i].use(target);
         print(
           "Used " +
-            player.items[i].type +
-            "! " +
-            player.type +
-            " total HP: " +
-            player.hp,
+            target.items[i].type +
+            "!" +
+            " Total " +
+            target.type +
+            " HP: " +
+            target.hp,
           "green"
         );
       }
@@ -613,7 +585,6 @@ function useItem(itemName, target) {
       }
       if (player.items[i].type === "key" && target.type === "Dungeon") {
         player.items[i].use(target);
-        print("Unlocking dungeon...", "red");
       }
       player.items.splice(i, 1);
     }
@@ -621,11 +592,11 @@ function useItem(itemName, target) {
 }
 
 function sell(itemIdx) {
-  if (assertEqual(player.position, tradesman.position)) {
+  if (assertEqual(player.position, tradesman1.position)) {
     player.gold += player.items[itemIdx].value;
-    tradesman.items.push(player.items[itemIdx]);
+    tradesman1.items.push(player.items[itemIdx]);
     print(
-      "You sold " +
+      "You sold a " +
         player.items[itemIdx].name +
         ". Your gold is: " +
         player.gold
@@ -635,35 +606,52 @@ function sell(itemIdx) {
 }
 
 function buy(itemIdx) {
-  if (assertEqual(player.position, tradesman.position)) {
-    if (player.gold - tradesman.items[itemIdx].value <= 0) {
+  if (assertEqual(player.position, tradesman1.position)) {
+    if (player.gold - tradesman1.items[itemIdx].value <= 0) {
       print(
         "You don't have enough gold! Required gold: " +
-          tradesman.items[itemIdx].value +
+          tradesman1.items[itemIdx].value +
           ", you have: " +
           player.gold
       );
     } else {
-      player.gold -= tradesman.items[itemIdx].value;
-      player.items.push(tradesman.items[itemIdx]);
+      player.gold -= tradesman1.items[itemIdx].value;
+      player.items.push(tradesman1.items[itemIdx]);
       print(
         "You purchased " +
-          tradesman.items[itemIdx].name +
+          tradesman1.items[itemIdx].name +
           ". Your gold is: " +
           player.gold
       );
-      tradesman.items.splice(itemIdx, 1);
+      tradesman1.items.splice(itemIdx, 1);
     }
   }
 }
 
+let skills = [
+  {
+    name: "steal",
+    requiredLevel: 3, //(number - the skill should not be useable if player level is lower)
+    cooldown: 25000, //(number - initial value is 0 meaning it's useable, over 0 means we have to wait. This gets updated to the cooldown value when skill is used and gradually decreases until it's back to 0)
+    use: () => {} //(function - takes a target / entity as a parameter and uses the skill on it)
+  },
+  {
+    name: "confuse",
+    requiredLevel: 1,
+    cooldown: 10000,
+    use: () => {} //expects a target as parameter and reverses the name of the target entity as well as dealing [player level * 25] damage (e.g. level 1 -> deals 25hp)
+  }
+];
+
 // Uses a player skill (note: skill is not consumable, it's useable infinitely besides the cooldown wait time)
 // skillName is a string. target is an entity (typically monster).
 function useSkill(skillName, target) {
-  player.skills.name = skillName;
-  if (skillName === "confuse" && skills.cooldown === 10000) {
-    print("Confusing " + monster.name + "...");
+  skills.name = skillName;
+  monster1 = target;
+  if (skillName === "confuse" && target === monster1 && skills.cooldown === 0) {
+    print("Confusing " + monster1.name + "...");
     function monsterName(str) {
+      //let str = monster1.name;
       let reversedName = "";
       for (let i = str.length - 1; i >= 0; i--) {
         reversedName += str.charAt(i);
@@ -677,11 +665,19 @@ function useSkill(skillName, target) {
       "red"
     );
   }
-  if (skillName === "steal" && skills.cooldown === 25000) {
+  if (skillName === "steal" && skills.cooldown === 0) {
     if (player.level < 3) {
       print("You must be level 3 or higher to use this skill.", "red");
+    } else {
+      target.items = filter(target.items, rarity);
+      player.items.concat(target.items);
     }
   }
+}
+
+function rarity(itemIndx) {
+  if (target.items[itemIndx] <= 1) return true;
+  return false;
 }
 
 function setupPlayer() {
