@@ -1,3 +1,102 @@
+function useItem(itemName, target) {
+  if (target === undefined && items.type === "potion") {
+    player.items[i].use(player);
+  } else if (assertEqual(player.position, tradesman1.position)) {
+    player.items[i].use(tradesman1);
+  }
+  for (i = 0; i < target.items.length; i++) {
+    if (target.items[i].name === itemName) {
+      target.items[i].use(target);
+      print(
+        "Used " +
+          target.items[i].type +
+          "! +" +
+          target.items[i].use(target) +
+          "hp (Total HP: " +
+          target.hp +
+          ")",
+        "green"
+      );
+      target.items.splice(i, 1);
+    }
+  }
+}
+
+function useItem(name, target) {
+  let itemIdx = player.items.map(item => item.name).indexOf(name);
+  if (itemIdx > player.items.length) {
+    print("You don't have this item in your inventory!", "red");
+  } else if (player.items[itemIdx].type === "potion" && target === undefined) {
+    player.items[itemIdx].use(player);
+    print(
+      "You used " +
+        player.items[itemIdx].type +
+        "! You get +" +
+        player.items[itemIdx].use(player) +
+        " hp. Your current hp is: " +
+        player.hp +
+        ".",
+      "green"
+    );
+    player.items.splice(i, 1);
+  } else if (assertEqual(player.position, target.position)) {
+    player.items[itemIdx].use(target);
+  } else if (player.items[itemIdx].type === "bomb") {
+    itemIdx.player.items[itemIdx].use(target);
+    print(
+      "You used " +
+        name +
+        " on" +
+        target.name +
+        "." +
+        target.name +
+        " hp is: " +
+        target.hp +
+        ".",
+      "green"
+    );
+  }
+}
+
+function useItem(name, target) {
+  let itemIdx = player.items
+    .map(function(item) {
+      return item.name;
+    })
+    .indexOf(name);
+  if (itemIdx === -1) {
+    print("You don't have this item in your inventory!", "red");
+  } else if (player.items[itemIdx].type === "potion" && target === undefined) {
+    player.items[itemIdx].use(player);
+    print(
+      "You used " +
+        player.items[itemIdx].type +
+        "! You get +" +
+        player.items[itemIdx].use(player) +
+        " hp. Your current hp is: " +
+        player.hp +
+        ".",
+      "green"
+    );
+    player.items.splice(i, 1);
+  } else if (assertEqual(player.position, target.position)) {
+    player.items[itemIdx].use(target);
+  } else if (player.items[itemIdx].type === "bomb") {
+    itemIdx.player.items[itemIdx].use(target);
+    print(
+      "You used " +
+        name +
+        " on" +
+        target.name +
+        "." +
+        target.name +
+        " hp is: " +
+        target.hp +
+        ".",
+      "green"
+    );
+  }
+}
 /*
 NOTE: You will need to add and modify code in this file to complete this project.
 I have defined a few functions and variables to help guide you but that doesn't mean no other variables or functions are necessary.

@@ -7,6 +7,7 @@ const GAME_STEPS = ["SETUP_PLAYER", "SETUP_BOARD", "GAME_START"];
 let gameStep = 0; // The current game step, value is index of the GAME_STEPS array.
 let board = [];
 let boardEntity = ".";
+let boardEntityNextStep = "";
 // Utility function to print messages with different colors. Usage: print('hello', 'red');
 function print(arg, color) {
   if (typeof arg === "object") console.log(arg);
@@ -121,20 +122,6 @@ function createItem(item, position) {
   return newItem;
 }
 
-// Uses a player item (note: this consumes the item, need to remove it after use)
-// itemName is a string, target is an entity (i.e. monster, tradesman, player, dungeon)
-// If target is not specified, item should be used on player for type 'potion'. Else, item should be used on the entity at the same position
-// First item of matching type is used
-function useItem(itemName, target) {
-  for (i = 0; i < target.items.length; i++) {
-    if (target.items[i].name === itemName) {
-      target.items[i].use(target);
-      print("Used " + target.items[i].type);
-      target.items.splice(i, 1);
-    }
-  }
-}
-
 // Clones an array of objects
 // returns a new array of cloned objects. Useful to clone an array of item objects
 //{original, clone if original === clone return true else return false}
@@ -175,12 +162,12 @@ let player = {
   name: "",
   level: 1,
   items: [], //(array of objects)
-  skills: [], //[confuse, steal],
+  skills: [{}, {}], //[confuse, steal],
   attack: 10,
   speed: 3000,
   hp: 100,
-  gold: 100, //(number - 0 to start. Can get gold by selling items to the tradesman)
-  exp: 0, //(number - 0 to start. Experience points, increase when slaying monsters)
+  gold: 20, //(number - 0 to start. Can get gold by selling items to the tradesman)
+  exp: 35, //(number - 0 to start. Experience points, increase when slaying monsters)
   type: "Player",
   position: { row: 0, column: 0 }, //(object - can be left out and set when needed)
   getMaxHp: function() {
@@ -227,7 +214,7 @@ function createPlayer(name, level = 1, items = []) {
 
 let cell = {
   entity: "",
-  position: { row: 0, column: 0 }
+  object: {}
 };
 
 function createBoard(rows, columns) {
@@ -260,17 +247,23 @@ function placePlayer() {
 function initBoard(rows, columns) {
   print("Creating board and placing a player...");
   createBoard(rows, columns);
-  createPlayer("Bob", 1, [items[0], items[4]]);
+  createPlayer("Van", 1, [items[0], items[8]]);
   placePlayer();
   item1 = createItem(items[0], { row: 2, column: 7 });
   monster1 = createMonster(1, items[2], { row: 1, column: 7 });
-  print(monster1.getExp());
+  monster2 = createMonster(5, items[4], { row: 1, column: 8 });
   tradesman1 = createTradesman(items, { row: 3, column: 6 });
-  dungeon1 = createDungeon({ row: 4, column: 7 }, false, false, items[4], 100);
+  dungeon1 = createDungeon({ row: 4, column: 7 }, true, false, items[4], 100);
+  dungeon2 = createDungeon({ row: 3, column: 8 }, false, false, items[2], 200);
+  dungeon3 = createDungeon({ row: 3, column: 3 }, true, true, items[8], 300);
   board[item1.position.row][item1.position.column].entity = "I";
   updateBoard(monster1);
+  updateBoard(monster2);
+  updateBoard(dungeon2);
+  updateBoard(dungeon3);
   updateBoard(tradesman1);
   updateBoard(dungeon1);
+  //useItem("Common potion", player);
   return printBoard();
 }
 
@@ -284,6 +277,18 @@ function printBoard() {
     boardDisplay += "\n";
   }
   print(boardDisplay);
+}
+
+// Updates the board by setting the entity at the entity position
+// An entity has a position property, each board cell is an object with an entity property holding a reference to the entity at that position
+// When a player is on a board cell, the board cell keeps the current entity property (e.g. monster entity at that position) and may need to have an additional property to know the player is there too.
+
+function updateBoard(entity) {
+  board[entity.position.row][entity.position.column].entity = entity.type.slice(
+    0,
+    1
+  );
+  board[entity.position.row][entity.position.column].object = entity;
 }
 
 const monsterNames = [
@@ -400,64 +405,71 @@ function move(direction) {
 
   let x = newPlayerPosition.row;
   let y = newPlayerPosition.column;
-  if (board[x][y].entity !== "#") {
-    board[player.position.row][player.position.column].entity = boardEntity;
-    boardEntity = ".";
-    board[x][y].entity = "P";
-    player.position = newPlayerPosition;
-  } else {
-    print("You hit the wall!");
-  }
 
   if (assertEqual(newPlayerPosition, item1.position)) {
+    boardEntityNextStep = ".";
     player.items.push(item1);
     print("Found a " + item1.name + "!");
   }
 
-  if (assertEqual(newPlayerPosition, monster1.position)) {
-    print("Encountered a " + monster1.name + "!");
+  if (board[x][y].entity === "M") {
+    boardEntityNextStep = ".";
+    monster = board[x][y].object;
+    print("Encountered a " + monster.name + "!");
     let interval1 = setInterval(() => hitPlayer(), player.speed);
-    let interval2 = setInterval(() => hitMonster(), monster1.speed);
+    let interval2 = setInterval(() => hitMonster(), monster.speed);
     function hitPlayer() {
-      monster1.hp = monster1.hp - player.attack;
+      monster.hp = monster.hp - player.attack;
+      if (monster.hp < 0) {
+        monster.hp = 0;
+      }
       print(
-        monster1.name +
+        monster.name +
           " hit!" +
           " -" +
           player.attack +
           " hp" +
           "\n" +
           "HP left: " +
-          monster1.hp,
+          monster.hp,
         "purple"
       );
-      if (monster1.hp <= 0) {
+      if (monster.hp <= 0) {
         clearInterval(interval1);
         clearInterval(interval2);
-        player.exp = player.exp + monster1.getExp();
-        player.items = player.items.concat(monster1.items);
+        player.exp = player.exp + monster.getExp();
+        player.items = player.items.concat(monster.items);
         print(
-          monster1.name +
+          monster.name +
             " defeated." +
             "\n" +
             "Congratulations! You have received " +
-            monster1.getExp() +
+            monster.getExp() +
             " exp points." +
             "\n" +
             "You received the following items:" +
             "\n"
         );
-        print(monster1.items);
+        print(monster.items);
+        if ((player.level + 1) * 20 < player.exp) {
+          player.levelUp();
+          player.getMaxHp();
+          player.getExpToLevel();
+          print("Congratulations! You leveled up!");
+        }
       }
     }
 
     function hitMonster() {
-      player.hp = player.hp - monster1.attack;
+      player.hp = player.hp - monster.attack;
+      if (player.hp < 0) {
+        player.hp = 0;
+      }
       print(
         player.name +
           " hit!" +
           " -" +
-          monster1.attack +
+          monster.attack +
           " hp" +
           "\n" +
           "HP left: " +
@@ -467,114 +479,205 @@ function move(direction) {
       if (player.hp <= 0) {
         clearInterval(interval1);
         clearInterval(interval2);
+        gameOver();
       }
     }
   }
 
   if (assertEqual(newPlayerPosition, tradesman1.position)) {
     print(
-      "Encountered Mysterious trader! You can buy(itemIdx) and sell(itemIdx) items $$$" +
-        "\n" +
-        "Items for sale:" +
-        "\n"
+      "You encountered a Mysterious trader! You can buy(itemIdx) and sell(itemIdx) items"
     );
-    boardEntity = "T";
+    print("Items for sale:");
+    boardEntityNextStep = "T";
     print(tradesman1.items);
   }
 
-  if (assertEqual(newPlayerPosition, dungeon1.position)) {
-    boardEntity = "D";
-    print("Found a dungeon!");
-    if (dungeon1.isLocked === true) {
+  if (board[x][y].entity === "D") {
+    dungeon = board[x][y].object;
+    boardEntityNextStep = "D";
+    print("You found a dungeon!");
+    if (dungeon.isLocked === true) {
       print(
-        "You need a key to open it. If you have a key, try useItem(key) to unlock the door." +
-          "\n" +
-          "Rumors are some monsters have keys to dungeons. The tradesman might also have spare keys to sell but they don't come cheap."
+        "You need a key to open it. If you have a key, try useItem(key) to unlock the door."
+      );
+      print(
+        "Rumors are some monsters have keys to dungeons. The tradesman might also have spare keys to sell but they don't come cheap."
       );
     }
-    if (dungeon1.isLocked === false && dungeon1.hasPrincess === false) {
-      print("You found " + dungeon1.gold + " gold and these items: " + "\n");
-      print(dungeon1.items);
-      player.items = player.items.concat(dungeon1.items);
-      player.gold += dungeon1.gold;
-      dungeon1.items = [];
-      dungeon1.gold = 0;
-    }
-    if (dungeon1.isLocked === false && dungeon1.hasPrincess === true) {
+    if (dungeon.isLocked === false && dungeon.hasPrincess === false) {
+      print("The dungeon is unlocked!");
+      print("Unfortunately, there was no princess.");
       print(
-        "The dungeon is unlocked!" +
-          "\n" +
-          "You have freed the princess! Congratulations!" +
-          "The adventurer " +
+        "As consolation, you found " + dungeon.gold + " gold and these items: "
+      );
+      print(dungeon.items);
+      player.items = player.items.concat(dungeon.items);
+      player.gold += dungeon.gold;
+      dungeon.items = [];
+      dungeon.gold = 0;
+    }
+    if (dungeon.isLocked === false && dungeon.hasPrincess === true) {
+      print("The dungeon is unlocked!");
+      print("You have freed the princess! Congratulations!");
+      print(
+        "The adventurer " +
           player.name +
           " and the princess lived happily ever after..."
       );
       gameOver();
     }
   }
+  if (board[x][y].entity === ".") {
+    boardEntityNextStep = ".";
+  }
+  if (board[x][y].entity !== "#") {
+    board[player.position.row][player.position.column].entity = boardEntity;
+    boardEntity = boardEntityNextStep;
+    board[x][y].entity = "P";
+    player.position = newPlayerPosition;
+  } else {
+    print("You hit the wall!");
+  }
   printBoard();
+}
+
+// Uses a player item (note: this consumes the item, need to remove it after use)
+// itemName is a string, target is an entity (i.e. monster, tradesman, player, dungeon)
+// If target is not specified, item should be used on player for type 'potion'. Else, item should be used on the entity at the same position
+// First item of matching type is used
+function useItem(itemName, target) {
+  for (i = 0; i < player.items.length; i++) {
+    if (player.items[i].name === itemName) {
+      if (player.items[i].type === "potion") {
+        if (target === undefined) {
+          target = player;
+        }
+        player.items[i].use(target);
+        print(
+          "Used " +
+            target.items[i].type +
+            "!" +
+            " Total " +
+            target.type +
+            " HP: " +
+            target.hp,
+          "green"
+        );
+      }
+      if (target === undefined) {
+        target = board[player.position.row][player.position.column].object;
+      }
+      if (player.items[i].type === "bomb" && target.type === "Monster") {
+        player.items[i].use(target);
+        print(
+          "You used " +
+            player.items[i].name +
+            " on" +
+            target.name +
+            "." +
+            target.name +
+            " hp is: " +
+            target.hp +
+            ".",
+          "red"
+        );
+      }
+      if (player.items[i].type === "key" && target.type === "Dungeon") {
+        player.items[i].use(target);
+      }
+      player.items.splice(i, 1);
+    }
+  }
 }
 
 function sell(itemIdx) {
   if (assertEqual(player.position, tradesman1.position)) {
     player.gold += player.items[itemIdx].value;
     tradesman1.items.push(player.items[itemIdx]);
+    print(
+      "You sold a " +
+        player.items[itemIdx].name +
+        ". Your gold is: " +
+        player.gold
+    );
     player.items.splice(itemIdx, 1);
   }
 }
 
 function buy(itemIdx) {
   if (assertEqual(player.position, tradesman1.position)) {
-    player.gold -= player.items[itemIdx].value;
-    player.items.push(tradesman1.items[itemIdx]);
-    tradesman1.items.splice(itemIdx, 1);
+    if (player.gold - tradesman1.items[itemIdx].value <= 0) {
+      print(
+        "You don't have enough gold! Required gold: " +
+          tradesman1.items[itemIdx].value +
+          ", you have: " +
+          player.gold
+      );
+    } else {
+      player.gold -= tradesman1.items[itemIdx].value;
+      player.items.push(tradesman1.items[itemIdx]);
+      print(
+        "You purchased " +
+          tradesman1.items[itemIdx].name +
+          ". Your gold is: " +
+          player.gold
+      );
+      tradesman1.items.splice(itemIdx, 1);
+    }
   }
 }
 
-let skills = {
-  name: "",
-  requiredLevel: 0, //(number - the skill should not be useable if player level is lower)
-  cooldown: 0, //(number - initial value is 0 meaning it's useable, over 0 means we have to wait. This gets updated to the cooldown value when skill is used and gradually decreases until it's back to 0)
-  use: () => {} //(function - takes a target / entity as a parameter and uses the skill on it)
-};
-//if (player.level < skills.requiredLevel) {skills.use === undefined}
-
-let skill1 = {
-  name: "confuse",
-  requiredLevel: 1,
-  cooldown: 10000,
-  use: () => {} //expects a target as parameter and reverses the name of the target entity as well as dealing [player level * 25] damage (e.g. level 1 -> deals 25hp)
-};
-
-function monsterName(name) {
-  monster1.name = name;
-  let reversedName = "";
-  for (let i = name.length - 1; i >= 0; i--) {
-    reversedName += name.charAt(i);
+let skills = [
+  {
+    name: "steal",
+    requiredLevel: 3, //(number - the skill should not be useable if player level is lower)
+    cooldown: 25000, //(number - initial value is 0 meaning it's useable, over 0 means we have to wait. This gets updated to the cooldown value when skill is used and gradually decreases until it's back to 0)
+    use: () => {} //(function - takes a target / entity as a parameter and uses the skill on it)
+  },
+  {
+    name: "confuse",
+    requiredLevel: 1,
+    cooldown: 10000,
+    use: () => {} //expects a target as parameter and reverses the name of the target entity as well as dealing [player level * 25] damage (e.g. level 1 -> deals 25hp)
   }
-  return reversedName;
-}
-
-let skill2 = {
-  name: "steal",
-  requiredLevel: 3,
-  cooldown: 25000,
-  use: () => {} //expects a target as parameter and steals all items of rarity 1 or lower (i.e. unusual or common). Stolen items should be added to the player and removed from the target entity.
-};
+];
 
 // Uses a player skill (note: skill is not consumable, it's useable infinitely besides the cooldown wait time)
 // skillName is a string. target is an entity (typically monster).
-function useSkill(skillName, target) {}
+function useSkill(skillName, target) {
+  skills.name = skillName;
+  monster1 = target;
+  if (skillName === "confuse" && target === monster1 && skills.cooldown === 0) {
+    print("Confusing " + monster1.name + "...");
+    function monsterName(str) {
+      //let str = monster1.name;
+      let reversedName = "";
+      for (let i = str.length - 1; i >= 0; i--) {
+        reversedName += str.charAt(i);
+      }
+      return reversedName;
+    }
+    print(
+      "..." +
+        reversedName +
+        ", target is confused and hurts itself in the process",
+      "red"
+    );
+  }
+  if (skillName === "steal" && skills.cooldown === 0) {
+    if (player.level < 3) {
+      print("You must be level 3 or higher to use this skill.", "red");
+    } else {
+      target.items = filter(target.items, rarity);
+      player.items.concat(target.items);
+    }
+  }
+}
 
-// Updates the board by setting the entity at the entity position
-// An entity has a position property, each board cell is an object with an entity property holding a reference to the entity at that position
-// When a player is on a board cell, the board cell keeps the current entity property (e.g. monster entity at that position) and may need to have an additional property to know the player is there too.
-
-function updateBoard(entity) {
-  board[entity.position.row][entity.position.column].entity = entity.type.slice(
-    0,
-    1
-  );
+function rarity(itemIndx) {
+  if (target.items[itemIndx] <= 1) return true;
+  return false;
 }
 
 function setupPlayer() {
